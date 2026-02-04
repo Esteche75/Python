@@ -1,0 +1,5 @@
+x = float(input('Vad är mätarställningen idag? '))
+y = float(input('Vad var mätarställningen för ett år sedan? '))
+print(f'Antal körda mil: {x - y}')
+z = float(input('Hur många liter bensin har förbrukats under året? '))
+print(f'Bilen drar i snitt {z / (x - y):.2f} liter per mil')
