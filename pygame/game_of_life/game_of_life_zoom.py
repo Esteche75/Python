@@ -6,43 +6,42 @@
 import pygame
 import random
 
-# pygame setup
-pygame.init()
-SCREEN_WIDTH = 1500
-SCREEN_HEIGHT = 1000
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-clock = pygame.time.Clock()
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-grid_size = 8
-rows = SCREEN_HEIGHT // grid_size
-cols = SCREEN_WIDTH // grid_size
-running = True
-simulation_speed = 100  # millisekunder (100ms = 10 per sekund)
-last_update = 0
-paused = False
-pygame.display.set_caption("Game of Life - RUNNING (R=random, C=clear, SPACE=pause)")
-grid = [[0 for _ in range(cols)] for _ in range(rows)]
-
 # Funktioner
+
+def update_grid_size():
+    global rows, cols, grid
+
+    width, height = screen.get_size()
+
+    rows = height // grid_size
+    cols = width // grid_size
+
+    grid = [[0 for _ in range(cols)] for _ in range(rows)]
+
+def toggle_fullscreen():
+    global screen, fullscreen
+
+    fullscreen = not fullscreen
+
+    if fullscreen:
+        screen = pygame.display.set_mode((0,0), pygame.NOFRAME, display=0)
+    else:
+        screen = pygame.display.set_mode((1280,720))
+
+    update_grid_size()
 
 def update_grid(grid):
     new_grid = [[0 for _ in range(cols)] for _ in range(rows)]
 
     for row in range(rows):
         for col in range(cols):
-
             neighbors = 0
-
             for dr in [-1, 0, 1]:
                 for dc in [-1, 0, 1]:
-
                     if dr == 0 and dc == 0:
                         continue
-
                     r = (row + dr) % rows
                     c = (col + dc) % cols
-
                     neighbors += grid[r][c]
 
             # Game of Life rules
@@ -66,6 +65,24 @@ def update_caption():
         "Game of Life - RUNNING (R=random, C=clear, SPACE=pause)"
     )
 
+# pygame setup
+pygame.init()
+clock = pygame.time.Clock()
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+grid_size = 5
+running = True
+simulation_speed = 100  # millisekunder (100ms = 10 per sekund)
+last_update = 0
+paused = False
+fullscreen = False
+pygame.display.set_caption("Game of Life - RUNNING (R=random, C=clear, SPACE=pause)")
+#grid = [[0 for _ in range(cols)] for _ in range(rows)]
+screen = pygame.display.set_mode((1280,720))
+update_grid_size()
+
+
+
 while running:
 
     dt = clock.tick(60)   # ← EN gång, högst upp
@@ -82,9 +99,13 @@ while running:
                 update_caption()
 
             elif event.key == pygame.K_r:
-                grid = [[1 if random.random() < 0.1 else 0 for _ in range(cols)] for _ in range(rows)]
+                grid = [[1 if random.random() < 0.15 else 0 for _ in range(cols)] for _ in range(rows)]
             elif event.key == pygame.K_c:
                 grid = [[0 for _ in range(cols)] for _ in range(rows)]
+            elif event.key == pygame.K_f:
+                toggle_fullscreen()
+                
+
 # Muskontroll
 
     if paused:
@@ -118,9 +139,6 @@ while running:
 
             if grid[row][col] == 1:
                 color = WHITE
-            else:
-                color = BLACK
-
-            pygame.draw.rect(screen, color, (x, y, grid_size, grid_size))
+                pygame.draw.rect(screen, color, (x, y, grid_size, grid_size))
 
     pygame.display.flip()
