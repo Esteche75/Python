@@ -5,6 +5,7 @@
 
 import random
 import os
+import numpy as np
 os.environ['SDL_VIDEO_WINDOW_POS'] = "0,0"   # placera på primära skärmen
 import pygame
 
@@ -18,7 +19,7 @@ def update_grid_size():
     rows = height // grid_size
     cols = width // grid_size
 
-    grid = [[0 for _ in range(cols)] for _ in range(rows)]
+    grid = np.zeros((rows, cols), dtype=np.uint8)
 
 
 def toggle_fullscreen():
@@ -34,32 +35,19 @@ def toggle_fullscreen():
     update_grid_size()
 
 def update_grid(grid):
-    new_grid = [[0 for _ in range(cols)] for _ in range(rows)]
 
-    for row in range(rows):
-        for col in range(cols):
-            neighbors = 0
-            for dr in [-1, 0, 1]:
-                for dc in [-1, 0, 1]:
-                    if dr == 0 and dc == 0:
-                        continue
-                    r = (row + dr) % rows
-                    c = (col + dc) % cols
-                    neighbors += grid[r][c]
+    neighbors = (
+        np.roll(grid, 1, 0) +
+        np.roll(grid, -1, 0) +
+        np.roll(grid, 1, 1) +
+        np.roll(grid, -1, 1) +
+        np.roll(np.roll(grid, 1,0),1,1) +
+        np.roll(np.roll(grid, 1,0),-1,1) +
+        np.roll(np.roll(grid,-1,0),1,1) +
+        np.roll(np.roll(grid,-1,0),-1,1)
+    )
 
-            # Game of Life rules
-            if grid[row][col] == 1:
-                if neighbors < 2:
-                    new_grid[row][col] = 0
-                elif neighbors in [2, 3]:
-                    new_grid[row][col] = 1
-                else:
-                    new_grid[row][col] = 0
-            else:
-                if neighbors == 3:
-                    new_grid[row][col] = 1
-
-    return new_grid
+    return ((neighbors == 3) | ((grid == 1) & (neighbors == 2))).astype(int)
 
 def update_caption():
     pygame.display.set_caption(
@@ -73,7 +61,7 @@ pygame.init()
 clock = pygame.time.Clock()
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-grid_size = 3
+grid_size = 5
 running = True
 simulation_speed = 100  # millisekunder (100ms = 10 per sekund)
 last_update = 0
@@ -103,9 +91,9 @@ while running:
             elif event.key == pygame.K_q:
                 running = False
             elif event.key == pygame.K_r:
-                grid = [[1 if random.random() < 0.15 else 0 for _ in range(cols)] for _ in range(rows)]
+                grid = (np.random.random((rows, cols)) < 0.2).astype(np.uint8)
             elif event.key == pygame.K_c:
-                grid = [[0 for _ in range(cols)] for _ in range(rows)]
+                grid = np.zeros((rows, cols), dtype=np.uint8)
             elif event.key == pygame.K_f:
                 toggle_fullscreen()
                 
@@ -120,9 +108,9 @@ while running:
         buttons = pygame.mouse.get_pressed()
 
         if buttons[0]:
-            grid[row][col] = 1
+            grid[row, col] = 1
         if buttons[2]:
-            grid[row][col] = 0   
+            grid[row, col] = 0   
         
 
     current_time = pygame.time.get_ticks()
@@ -135,14 +123,13 @@ while running:
 
 # Rita upp grid och flip till skärm
 
-    for row in range(rows):
-        for col in range(cols):
+    surface = pygame.surfarray.make_surface((grid * 255).T)
 
-            x = col * grid_size
-            y = row * grid_size
+    surface = pygame.transform.scale(
+        surface,
+        (cols * grid_size, rows * grid_size)
+    )
 
-            if grid[row][col] == 1:
-                color = WHITE
-                pygame.draw.rect(screen, color, (x, y, grid_size, grid_size))
+    screen.blit(surface,(0,0))
 
     pygame.display.flip()
