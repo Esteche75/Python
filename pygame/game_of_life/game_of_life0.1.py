@@ -17,7 +17,7 @@ update_grid_size(state)
 # main loop
 
 while state.running:
-
+    state.clock.tick(60)
     event_input(state)
     check_timing(state)
     draw_surface(state)
