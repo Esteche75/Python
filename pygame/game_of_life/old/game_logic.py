@@ -1,5 +1,4 @@
 import numpy as np
-import cupy as cp
 import pygame
 
 class Slider:
@@ -75,8 +74,8 @@ def update_grid_size(state):
     state.width, state.height = state.screen.get_size()
     state.rows = state.height // state.grid_size
     state.cols = state.width // state.grid_size
-    state.grid = cp.zeros((state.rows, state.cols), dtype=cp.uint8)
-    
+    state.grid = np.zeros((state.rows, state.cols), dtype=np.uint8)
+
 def toggle_fullscreen(state):
 
     state.fullscreen = not state.fullscreen    
@@ -89,16 +88,16 @@ def toggle_fullscreen(state):
 def update_grid(state):
 
     neighbors = (
-        cp.roll(state.grid, 1, 0) +
-        cp.roll(state.grid, -1, 0) +
-        cp.roll(state.grid, 1, 1) +
-        cp.roll(state.grid, -1, 1) +
-        cp.roll(cp.roll(state.grid, 1,0),1,1) +
-        cp.roll(cp.roll(state.grid, 1,0),-1,1) +
-        cp.roll(cp.roll(state.grid,-1,0),1,1) +
-        cp.roll(cp.roll(state.grid,-1,0),-1,1)
+        np.roll(state.grid, 1, 0) +
+        np.roll(state.grid, -1, 0) +
+        np.roll(state.grid, 1, 1) +
+        np.roll(state.grid, -1, 1) +
+        np.roll(np.roll(state.grid, 1,0),1,1) +
+        np.roll(np.roll(state.grid, 1,0),-1,1) +
+        np.roll(np.roll(state.grid,-1,0),1,1) +
+        np.roll(np.roll(state.grid,-1,0),-1,1)
     )
-    return ((neighbors == 3) | ((state.grid == 1) & (neighbors == 2))).astype(cp.int8)
+    return ((neighbors == 3) | ((state.grid == 1) & (neighbors == 2))).astype(int)
 
 def event_input(state):
 
@@ -110,10 +109,9 @@ def event_input(state):
             elif event.key == pygame.K_q:
                 state.running = False
             elif event.key == pygame.K_r:
-                state.grid = cp.asarray((np.random.random((state.rows, state.cols)) < state.density).astype(np.uint8)
-)
+                state.grid = (np.random.random((state.rows, state.cols)) < state.density).astype(np.uint8)
             elif event.key == pygame.K_c:
-                state.grid = cp.zeros((state.rows, state.cols), dtype=cp.uint8)
+                state.grid = np.zeros((state.rows, state.cols), dtype=np.uint8)
             elif event.key == pygame.K_f:
                 toggle_fullscreen(state)
             elif event.key == pygame.K_1:
@@ -150,23 +148,16 @@ def event_input(state):
 
 def draw_surface(state):
 
-    cpu_grid = cp.asnumpy(state.grid).astype(np.uint8)
-
-    # töm skärmen
+# töm skärmen
     state.screen.fill(state.BLACK)
-
-    # rita upp grid
-    state.live_cells = np.sum(cpu_grid)
-
-    state.surface = pygame.surfarray.make_surface((cpu_grid * 255).T)
-
+# rita upp grid och flip till skärm
+    state.live_cells = np.sum(state.grid)
+    state.surface = pygame.surfarray.make_surface((state.grid * 255).T)
     state.surface = pygame.transform.scale(
         state.surface,
         (state.cols * state.grid_size, state.rows * state.grid_size)
     )
-
     state.screen.blit(state.surface,(0,0))
-
     draw_ui(state)
 
 def check_timing(state):

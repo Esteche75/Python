@@ -1,7 +1,6 @@
-import pygame
-pygame.init()
-desktop_size = pygame.display.get_desktop_sizes()[0]
-screen_width, screen_height = desktop_size[0] // 2, desktop_size[1] // 2
+import cupy as cp
 
-print(f'{desktop_size[0], desktop_size[1]}')
+x = cp.arange(10)
+print(x)
+print(cp.cuda.runtime.getDeviceProperties(0)["name"])
       

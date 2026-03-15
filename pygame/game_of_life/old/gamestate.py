@@ -1,6 +1,5 @@
 import pygame
 import numpy as np
-import cupy as cp 
 from game_logic import Slider
 
 class GameState:
